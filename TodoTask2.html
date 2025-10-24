@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToDo</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+  <style>
+    .shadow-light {
+      box-shadow: 0 0 7px rgba(136, 39, 39, 0.8);
+    }
+    .shadow-dark {
+      box-shadow: 0 0 7px rgba(36, 33, 33, 0.8);
+    }
+    .task-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+    .fileStatus {
+      text-align: right;
+      background-color: white;
+      color: green;
+      font-size: 0.9rem;
+      margin-top: 5px;
+      padding-right: 5px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body class="bg-dark text-white">
+  <h1 class="text-center mt-5">To Do List</h1>
+  <div class="container bg-white" id="cont">
+    <ul class="list-group bg-white" id="taskList">
+      <li class="list-group-item fw-bold fs-5 bg-white text-white">
+        <div class="d-flex align-items-center">
+          <input class="form-check-input me-2" type="checkbox">
+          <span class="me-2 count text-dark">1.</span>
+          <span class="reNam flex-grow-1 text-dark">Task 1</span>
+          <div class="task-buttons ms-auto">
+            <a href="#" class="btn btn-sm border border-dark shadow-dark bg-dark text-white editBtn">Edit</a>
+            <a href="#" class="btn btn-sm btn-danger border border-dark shadow-light text-dark delBtn">Delete File</a>
+            <a href="#" class="btn btn-sm btn-success border border-dark shadow-light text-dark uploadBtn">Upload</a>
+          </div>
+        </div>
+        <input type="file" class="fileInput" style="display:none;">
+        <p class="fileStatus"></p>
+      </li>
+    </ul>
+
+    <div class="text-end mt-3">
+      <a href="#" id="adTsk" class="btn btn-success shadow-light fw-bold">+ Add Task</a>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div class="modal fade" id="myModal">
+    <div class="modal-dialog">
+      <div class="modal-content text-dark">
+        <div class="modal-header">
+          <h4 class="modal-title text-danger">Delete Uploaded File</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          Do you want to delete the uploaded file?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger btn-sm" data-bs-dismiss="modal">Close</button>
+          <button type="button" id="confirmDelete" class="btn btn-sm btn-danger border border-dark shadow-light text-dark">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+
+  <script>
+    const taskList = document.getElementById("taskList");
+    const addTaskBtn = document.getElementById("adTsk");
+    let count = 1;
+    let fileTarget = null;
+
+  
+    function attachTaskEvents(taskItem) {
+      const reNam = taskItem.querySelector('.reNam');
+      const editBtn = taskItem.querySelector('.editBtn');
+      const uploadBtn = taskItem.querySelector('.uploadBtn');
+      const fileInput = taskItem.querySelector('.fileInput');
+      const fileStatus = taskItem.querySelector('.fileStatus');
+      const delBtn = taskItem.querySelector('.delBtn');
+      let uploaded = false;
+
+      editBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const currentTxt = reNam.textContent.trim();
+        reNam.innerHTML = `<input type="text" id="in" value="${currentTxt}" class="form-control form-control-sm">`;
+        const input = reNam.querySelector('#in');
+        input.focus();
+        input.addEventListener('blur', () => reNam.textContent = input.value);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === "Enter") reNam.textContent = input.value;
+        });
+      });
+
+      uploadBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (uploaded) {
+          alert("File already uploaded for this task");
+          return;
+        }
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', function (event) {
+        const file = event.target.files[0];
+        if (file) {
+          uploaded = true;
+          fileStatus.textContent = `Submitted: ${file.name}`;
+        }
+      });
+
+    
+      delBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        fileTarget = { fileStatus, fileInput, taskItem };
+        const modal = new bootstrap.Modal(document.getElementById('myModal'));
+        modal.show();
+      });
+
+  
+      document.getElementById('confirmDelete').addEventListener('click', function () {
+        if (fileTarget && fileTarget.taskItem === taskItem) {
+          fileStatus.textContent = "";
+          fileInput.value = "";
+          uploaded = false;
+          fileTarget = null;
+          const modal = bootstrap.Modal.getInstance(document.getElementById('myModal'));
+          modal.hide();
+          alert("File deleted successfully. You can upload again.");
+        }
+      });
+    }
+
+    // Add New Task
+    addTaskBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      count++;
+      const newTask = document.createElement('li');
+      newTask.className = 'list-group-item fw-bold fs-5 bg-white text-dark';
+      newTask.innerHTML = `
+        <div class="d-flex align-items-center">
+          <input class="form-check-input me-2" type="checkbox">
+          <span class="me-2 count text-dark">${count}.</span>
+          <span class="reNam flex-grow-1 text-dark">Task ${count}</span>
+          <div class="task-buttons ms-auto">
+            <a href="#" class="btn btn-sm border border-dark shadow-dark bg-dark text-white editBtn">Edit</a>
+            <a href="#" class="btn btn-sm btn-danger border border-dark shadow-light text-dark delBtn">Delete File</a>
+            <a href="#" class="btn btn-sm btn-success border border-dark shadow-light text-dark uploadBtn">Upload</a>
+          </div>
+        </div>
+        <input type="file" class="fileInput" style="display:none;">
+        <p class="fileStatus"></p>
+      `;
+      taskList.appendChild(newTask);
+      attachTaskEvents(newTask);
+    });
+
+    // Attach events to initial task
+    attachTaskEvents(document.querySelector('#taskList li'));
+  </script>
+</body>
+</html>
